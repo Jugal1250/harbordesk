@@ -1,0 +1,242 @@
+[
+  {
+    "id": 1, "customer_id": 1, "channel": "email", "created_at": "2026-09-18T09:12:00Z", "status": "open",
+    "subject": "Invoice charged twice this month",
+    "body": "Hi, we were billed $540 on the 1st and again on the 3rd. Our card statement shows both charges. Can you refund the duplicate and confirm it won't happen again next month?",
+    "label": { "category": "billing", "priority": "high", "sentiment": "frustrated" }
+  },
+  {
+    "id": 2, "customer_id": 2, "channel": "chat", "created_at": "2026-09-18T10:41:00Z", "status": "open",
+    "subject": "How do I add a teammate?",
+    "body": "Quick one - where do I go to invite someone to my workspace? I can see the Members page but there's no obvious invite button.",
+    "label": { "category": "how_to", "priority": "low", "sentiment": "neutral" }
+  },
+  {
+    "id": 3, "customer_id": 3, "channel": "email", "created_at": "2026-09-18T11:05:00Z", "status": "open",
+    "subject": "URGENT: nobody on our team can log in",
+    "body": "Since this morning every single one of our 60 users gets 'session expired' immediately after entering the password. We have a client demo in two hours. This is completely blocking us.",
+    "label": { "category": "account_access", "priority": "urgent", "sentiment": "angry" }
+  },
+  {
+    "id": 4, "customer_id": 4, "channel": "email", "created_at": "2026-09-18T12:30:00Z", "status": "open",
+    "subject": "Payment failed notice",
+    "body": "We got an email saying our payment failed and the account is past due. The card on file expired. Where do I update it before you suspend us?",
+    "label": { "category": "billing", "priority": "high", "sentiment": "neutral" }
+  },
+  {
+    "id": 5, "customer_id": 5, "channel": "portal", "created_at": "2026-09-18T13:15:00Z", "status": "open",
+    "subject": "Export to CSV is missing columns",
+    "body": "When I export the client list to CSV, the 'last activity' and 'owner' columns are blank for every row, even though they show fine in the app. Tested in Chrome and Firefox, same result.",
+    "label": { "category": "bug", "priority": "normal", "sentiment": "neutral" }
+  },
+  {
+    "id": 6, "customer_id": 6, "channel": "email", "created_at": "2026-09-18T14:02:00Z", "status": "open",
+    "subject": "Cancelling our subscription",
+    "body": "We've decided to move to another tool at the end of this billing period. Please cancel our account and let me know how to download our data first.",
+    "label": { "category": "cancellation", "priority": "high", "sentiment": "neutral" }
+  },
+  {
+    "id": 7, "customer_id": 7, "channel": "email", "created_at": "2026-09-18T15:20:00Z", "status": "open",
+    "subject": "Slack integration stopped posting",
+    "body": "Our Slack notifications worked until Tuesday and now nothing arrives in the channel. I reconnected the integration twice. The webhook shows as active in your settings page.",
+    "label": { "category": "integration", "priority": "normal", "sentiment": "frustrated" }
+  },
+  {
+    "id": 8, "customer_id": 8, "channel": "chat", "created_at": "2026-09-18T16:48:00Z", "status": "open",
+    "subject": "Can you add recurring reminders?",
+    "body": "It would be really useful if we could set a task to repeat every week instead of creating it by hand each time. Is that on the roadmap?",
+    "label": { "category": "feature_request", "priority": "low", "sentiment": "happy" }
+  },
+  {
+    "id": 9, "customer_id": 9, "channel": "email", "created_at": "2026-09-19T08:11:00Z", "status": "open",
+    "subject": "Wrong VAT on our invoices",
+    "body": "Our invoices show 20% VAT but we're a Swiss company and should be charged 8.1%. We've overpaid on the last three invoices. Please correct and issue credit notes.",
+    "label": { "category": "billing", "priority": "high", "sentiment": "frustrated" }
+  },
+  {
+    "id": 10, "customer_id": 10, "channel": "email", "created_at": "2026-09-19T09:02:00Z", "status": "open",
+    "subject": "Reset password link expired",
+    "body": "I asked for a password reset yesterday and the link says it has expired. I've requested three more and none of them arrive now. Checked spam.",
+    "label": { "category": "account_access", "priority": "high", "sentiment": "frustrated" }
+  },
+  {
+    "id": 11, "customer_id": 11, "channel": "portal", "created_at": "2026-09-19T10:25:00Z", "status": "open",
+    "subject": "Dashboard numbers don't match the report",
+    "body": "The dashboard says 412 open jobs but the report export gives 388 for the same filter and date range. Which one is right? We use these numbers in our weekly meeting.",
+    "label": { "category": "bug", "priority": "high", "sentiment": "neutral" }
+  },
+  {
+    "id": 12, "customer_id": 12, "channel": "email", "created_at": "2026-09-19T11:40:00Z", "status": "open",
+    "subject": "Refund for the months we didn't use",
+    "body": "We cancelled in July but you kept charging us in August and September. I want both months refunded. This is the second time I've had to chase this and nobody has replied to my first email.",
+    "label": { "category": "billing", "priority": "urgent", "sentiment": "angry" }
+  },
+  {
+    "id": 13, "customer_id": 13, "channel": "chat", "created_at": "2026-09-19T12:15:00Z", "status": "open",
+    "subject": "Where are the keyboard shortcuts listed?",
+    "body": "Someone on my team mentioned there are shortcuts. Is there a list somewhere?",
+    "label": { "category": "how_to", "priority": "low", "sentiment": "neutral" }
+  },
+  {
+    "id": 14, "customer_id": 14, "channel": "email", "created_at": "2026-09-19T13:33:00Z", "status": "open",
+    "subject": "API returning 500 on bulk endpoint",
+    "body": "POST /v2/jobs/bulk returns a 500 for any payload over about 200 items. Smaller batches work. We've had to split our nightly sync into 40 calls and it now takes an hour.",
+    "label": { "category": "bug", "priority": "high", "sentiment": "frustrated" }
+  },
+  {
+    "id": 15, "customer_id": 15, "channel": "email", "created_at": "2026-09-19T14:50:00Z", "status": "open",
+    "subject": "Upgrade from Growth to Scale",
+    "body": "We're hiring 12 more people next month and will pass the seat limit. What does Scale cost for 32 seats and can we switch mid-cycle?",
+    "label": { "category": "billing", "priority": "normal", "sentiment": "happy" }
+  },
+  {
+    "id": 16, "customer_id": 16, "channel": "portal", "created_at": "2026-09-19T15:20:00Z", "status": "open",
+    "subject": "Connect to QuickBooks",
+    "body": "Do you support QuickBooks Online? Our accountant wants invoices to flow through automatically instead of us exporting CSVs each month.",
+    "label": { "category": "integration", "priority": "normal", "sentiment": "neutral" }
+  },
+  {
+    "id": 17, "customer_id": 17, "channel": "email", "created_at": "2026-09-19T16:05:00Z", "status": "open",
+    "subject": "Possible data leak - other company's data in our account",
+    "body": "One of our staff opened a job record and saw customer details belonging to a different company. Screenshot attached. We need to know immediately whether our data has been exposed to anyone else.",
+    "label": { "category": "security", "priority": "urgent", "sentiment": "angry" }
+  },
+  {
+    "id": 18, "customer_id": 18, "channel": "chat", "created_at": "2026-09-20T08:30:00Z", "status": "open",
+    "subject": "Loving the new calendar view",
+    "body": "Just wanted to say the calendar redesign is great, my team picked it up with no training. Any chance of a month view too?",
+    "label": { "category": "feature_request", "priority": "low", "sentiment": "happy" }
+  },
+  {
+    "id": 19, "customer_id": 19, "channel": "email", "created_at": "2026-09-20T09:14:00Z", "status": "open",
+    "subject": "Account closed but still charged",
+    "body": "I closed the account in the app. Today another $72 came off the card. Please stop taking money.",
+    "label": { "category": "billing", "priority": "urgent", "sentiment": "angry" }
+  },
+  {
+    "id": 20, "customer_id": 20, "channel": "portal", "created_at": "2026-09-20T10:00:00Z", "status": "open",
+    "subject": "Two-factor authentication for our team",
+    "body": "Our insurer is asking whether we enforce 2FA. Can we require it for everyone in the workspace, and do you support authenticator apps or only SMS?",
+    "label": { "category": "security", "priority": "normal", "sentiment": "neutral" }
+  },
+  {
+    "id": 21, "customer_id": 21, "channel": "email", "created_at": "2026-09-20T10:45:00Z", "status": "open",
+    "subject": "it doesnt work",
+    "body": "the thing isnt working again. same as before. please fix",
+    "label": { "category": "unclear", "priority": "normal", "sentiment": "frustrated" }
+  },
+  {
+    "id": 22, "customer_id": 22, "channel": "email", "created_at": "2026-09-20T11:30:00Z", "status": "open",
+    "subject": "Attachments over 10MB fail silently",
+    "body": "When a driver uploads a photo bigger than about 10MB the spinner runs and then stops, with no error and no file saved. They think it worked. We've lost proof-of-delivery photos because of this.",
+    "label": { "category": "bug", "priority": "high", "sentiment": "frustrated" }
+  },
+  {
+    "id": 23, "customer_id": 23, "channel": "chat", "created_at": "2026-09-20T12:10:00Z", "status": "open",
+    "subject": "Change the email on my login",
+    "body": "I'm switching from aisha@willowtutor.example to a new address. How do I change the email on my own login without losing my history?",
+    "label": { "category": "account_access", "priority": "low", "sentiment": "neutral" }
+  },
+  {
+    "id": 24, "customer_id": 24, "channel": "email", "created_at": "2026-09-20T13:25:00Z", "status": "open",
+    "subject": "Invoice PDF won't download and also our reports are slow",
+    "body": "Two things. The download button on the September invoice does nothing in Safari. Separately, the reports page has been taking 30+ seconds to load all week, which is new.",
+    "label": { "category": "bug", "priority": "normal", "sentiment": "frustrated" }
+  },
+  {
+    "id": 25, "customer_id": 1, "channel": "portal", "created_at": "2026-09-20T14:40:00Z", "status": "open",
+    "subject": "Bulk import template",
+    "body": "Is there a spreadsheet template for importing existing customers? We have about 3,000 rows from our old system.",
+    "label": { "category": "how_to", "priority": "normal", "sentiment": "neutral" }
+  },
+  {
+    "id": 26, "customer_id": 3, "channel": "email", "created_at": "2026-09-20T15:55:00Z", "status": "open",
+    "subject": "Zapier zap fires twice per event",
+    "body": "Every job completion triggers our Zap two times, so customers get duplicate SMS messages. Started roughly a week ago. Nothing changed on our side.",
+    "label": { "category": "integration", "priority": "high", "sentiment": "frustrated" }
+  },
+  {
+    "id": 27, "customer_id": 7, "channel": "email", "created_at": "2026-09-21T08:20:00Z", "status": "open",
+    "subject": "Need SOC 2 report for procurement",
+    "body": "Our client's procurement team has asked for your SOC 2 Type II report and a data processing agreement. Who do I speak to, and is there an NDA to sign first?",
+    "label": { "category": "security", "priority": "normal", "sentiment": "neutral" }
+  },
+  {
+    "id": 28, "customer_id": 8, "channel": "chat", "created_at": "2026-09-21T09:05:00Z", "status": "open",
+    "subject": "Can we white-label the customer portal?",
+    "body": "We'd like our logo and colours on the portal our clients see, and ideally our own domain. Possible on the Scale plan?",
+    "label": { "category": "feature_request", "priority": "normal", "sentiment": "neutral" }
+  },
+  {
+    "id": 29, "customer_id": 9, "channel": "email", "created_at": "2026-09-21T09:50:00Z", "status": "open",
+    "subject": "Timezone wrong on scheduled jobs",
+    "body": "Jobs scheduled for 09:00 show as 11:00 for our field staff. Our workspace is set to Europe/Zurich. Two drivers turned up two hours late yesterday because of this.",
+    "label": { "category": "bug", "priority": "high", "sentiment": "angry" }
+  },
+  {
+    "id": 30, "customer_id": 11, "channel": "email", "created_at": "2026-09-21T10:35:00Z", "status": "open",
+    "subject": "Pause our account for two months",
+    "body": "We're seasonal and close from November to January. Rather than cancelling, can we pause billing and keep our data? If not we'll have to cancel and re-import later.",
+    "label": { "category": "cancellation", "priority": "normal", "sentiment": "neutral" }
+  },
+  {
+    "id": 31, "customer_id": 13, "channel": "portal", "created_at": "2026-09-21T11:15:00Z", "status": "open",
+    "subject": "Adding a second workspace",
+    "body": "We've opened a second branch. Should that be a new workspace or can we keep one workspace and separate by team? Which way keeps reporting simplest?",
+    "label": { "category": "how_to", "priority": "normal", "sentiment": "neutral" }
+  },
+  {
+    "id": 32, "customer_id": 14, "channel": "email", "created_at": "2026-09-21T12:00:00Z", "status": "open",
+    "subject": "Webhook signature validation failing",
+    "body": "Your docs say to verify the X-Signature header with HMAC SHA-256 over the raw body. Ours never matches. Is the signature computed over the raw bytes or the parsed JSON?",
+    "label": { "category": "integration", "priority": "normal", "sentiment": "neutral" }
+  },
+  {
+    "id": 33, "customer_id": 15, "channel": "email", "created_at": "2026-09-21T12:45:00Z", "status": "open",
+    "subject": "Downgrade to Starter",
+    "body": "We've shrunk to 4 people and Growth is more than we need. What do we lose on Starter, and does the change take effect immediately or at renewal?",
+    "label": { "category": "billing", "priority": "normal", "sentiment": "neutral" }
+  },
+  {
+    "id": 34, "customer_id": 17, "channel": "email", "created_at": "2026-09-21T13:30:00Z", "status": "open",
+    "subject": "Removed user can still access the API",
+    "body": "We removed a contractor's account on Friday but their API token still works, we tested it this morning. Please revoke it and tell us whether deleting a user is supposed to revoke tokens.",
+    "label": { "category": "security", "priority": "urgent", "sentiment": "frustrated" }
+  },
+  {
+    "id": 35, "customer_id": 18, "channel": "chat", "created_at": "2026-09-21T14:10:00Z", "status": "open",
+    "subject": "Dark mode?",
+    "body": "Any plans for a dark theme? Half my team works evenings.",
+    "label": { "category": "feature_request", "priority": "low", "sentiment": "neutral" }
+  },
+  {
+    "id": 36, "customer_id": 20, "channel": "email", "created_at": "2026-09-21T15:00:00Z", "status": "open",
+    "subject": "Invoice address is wrong",
+    "body": "Our registered address changed in June. The September invoice still shows the old one and our accountant won't accept it. Where do I change the billing address?",
+    "label": { "category": "billing", "priority": "normal", "sentiment": "neutral" }
+  },
+  {
+    "id": 37, "customer_id": 21, "channel": "email", "created_at": "2026-09-21T15:45:00Z", "status": "open",
+    "subject": "Search returns nothing for valid customers",
+    "body": "Searching a customer by phone number returns no results, but the same customer opens fine from the list. Searching by name works. Started after last week's update.",
+    "label": { "category": "bug", "priority": "high", "sentiment": "frustrated" }
+  },
+  {
+    "id": 38, "customer_id": 22, "channel": "portal", "created_at": "2026-09-22T08:15:00Z", "status": "open",
+    "subject": "Do you have an Android app?",
+    "body": "Our drivers are on Android. Is there a native app or only the mobile website?",
+    "label": { "category": "how_to", "priority": "low", "sentiment": "neutral" }
+  },
+  {
+    "id": 39, "customer_id": 24, "channel": "email", "created_at": "2026-09-22T09:00:00Z", "status": "open",
+    "subject": "Renewal quote for 24 seats",
+    "body": "Our renewal is in six weeks and we're going from 14 to 24 seats. Can you send a quote and confirm whether the annual discount still applies if we add seats mid-term?",
+    "label": { "category": "billing", "priority": "normal", "sentiment": "happy" }
+  },
+  {
+    "id": 40, "customer_id": 16, "channel": "email", "created_at": "2026-09-22T09:30:00Z", "status": "open",
+    "subject": "Partnership opportunity for your platform",
+    "body": "Hello, I represent a digital marketing agency and we would love to discuss growing your user base with our proven SEO methods. Please let me know a good time to call.",
+    "label": { "category": "spam", "priority": "low", "sentiment": "neutral" }
+  }
+]

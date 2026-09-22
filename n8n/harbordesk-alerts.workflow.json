@@ -1,0 +1,155 @@
+{
+  "name": "Harbor Desk — urgent ticket alerts and daily digest",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Urgent alerts\nThe API posts here whenever triage marks a ticket urgent or security-related. The filter is a second check: n8n never trusts that the caller only sends urgent events.",
+        "height": 320,
+        "width": 620,
+        "color": 3
+      },
+      "id": "note-alerts",
+      "name": "Note alerts",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-40, -40]
+    },
+    {
+      "parameters": {
+        "content": "## Daily digest\nEvery weekday at 08:30 IST it reads the triage stats and posts one summary, so nobody has to open the console to know what arrived overnight.",
+        "height": 320,
+        "width": 620,
+        "color": 4
+      },
+      "id": "note-digest",
+      "name": "Note digest",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-40, 320]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "harbordesk-events",
+        "options": {}
+      },
+      "id": "webhook-events",
+      "name": "Ticket event from Harbor Desk",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [20, 100],
+      "webhookId": "harbordesk-events"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose" },
+          "combinator": "or",
+          "conditions": [
+            {
+              "id": "is-urgent",
+              "operator": { "type": "string", "operation": "equals" },
+              "leftValue": "={{ $json.body.ticket.priority }}",
+              "rightValue": "urgent"
+            },
+            {
+              "id": "is-security",
+              "operator": { "type": "string", "operation": "equals" },
+              "leftValue": "={{ $json.body.ticket.category }}",
+              "rightValue": "security"
+            }
+          ]
+        },
+        "options": { "looseTypeValidation": true }
+      },
+      "id": "filter-urgent",
+      "name": "Only urgent or security",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [260, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * Formats one urgent ticket for chat.\n * Mode: Run Once for All Items.\n */\nconst ICON = { urgent: '\\u{1F6A8}', security: '\\u{1F512}' };\n\nreturn $input.all().map((item) => {\n  const t = item.json.body.ticket;\n  const icon = t.category === 'security' ? ICON.security : ICON.urgent;\n  const confidence = Math.round((t.confidence ?? 0) * 100);\n  const lines = [\n    `${icon} ${t.priority.toUpperCase()} ticket #${t.id}`,\n    t.subject,\n    '',\n    `Category: ${t.category}  ·  Sentiment: ${t.sentiment}`,\n    `AI confidence: ${confidence}%  ·  Routed to: ${t.routed_to}`,\n    t.needs_human ? 'Flagged for human review before any automatic action.' : 'Auto-routed.',\n  ];\n  console.log(`[alert] ticket ${t.id} (${t.category}/${t.priority})`);\n  return { json: { text: lines.join('\\n'), ticket_id: t.id } };\n});"
+      },
+      "id": "format-alert",
+      "name": "Format alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 100]
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "={{ $json.text }}",
+        "additionalFields": { "appendAttribution": false }
+      },
+      "id": "send-alert",
+      "name": "Send alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [740, 100]
+    },
+    {
+      "parameters": {
+        "rule": { "interval": [{ "triggerAtHour": 8, "triggerAtMinute": 30 }] }
+      },
+      "id": "schedule-digest",
+      "name": "Every morning 08:30",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [20, 460]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8787/api/stats",
+        "options": { "response": { "response": { "neverError": false } } }
+      },
+      "id": "fetch-stats",
+      "name": "Read triage stats",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [260, 460],
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * Builds the morning digest from /api/stats.\n * Mode: Run Once for All Items.\n */\nconst stats = $input.first().json;\nconst t = stats.tickets ?? {};\nconst top = (stats.by_category ?? []).slice(0, 4).map((c) => `  ${c.category}: ${c.n}`);\nconst urgent = (stats.by_priority ?? []).find((p) => p.priority === 'urgent')?.n ?? 0;\n\nconst lines = [\n  '\\u{1F4CA} Harbor Desk — overnight summary',\n  '',\n  `Tickets triaged: ${t.triaged ?? 0} of ${t.total ?? 0}`,\n  `Waiting on a human: ${t.human_review ?? 0}`,\n  `Urgent: ${urgent}`,\n  '',\n  'Top categories:',\n  ...top,\n];\n\nconsole.log('[digest]', { triaged: t.triaged, human_review: t.human_review, urgent });\nreturn [{ json: { text: lines.join('\\n') } }];"
+      },
+      "id": "format-digest",
+      "name": "Format digest",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 460]
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "={{ $json.text }}",
+        "additionalFields": { "appendAttribution": false }
+      },
+      "id": "send-digest",
+      "name": "Send digest",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [740, 460]
+    }
+  ],
+  "connections": {
+    "Ticket event from Harbor Desk": { "main": [[{ "node": "Only urgent or security", "type": "main", "index": 0 }]] },
+    "Only urgent or security": { "main": [[{ "node": "Format alert", "type": "main", "index": 0 }]] },
+    "Format alert": { "main": [[{ "node": "Send alert", "type": "main", "index": 0 }]] },
+    "Every morning 08:30": { "main": [[{ "node": "Read triage stats", "type": "main", "index": 0 }]] },
+    "Read triage stats": { "main": [[{ "node": "Format digest", "type": "main", "index": 0 }]] },
+    "Format digest": { "main": [[{ "node": "Send digest", "type": "main", "index": 0 }]] }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata",
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all"
+  },
+  "pinData": {},
+  "active": false
+}
