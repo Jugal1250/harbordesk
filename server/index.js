@@ -11,6 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getDb, persist, query, run } from './db.js';
+import { seedDatabase } from './seed.js';
 import { activeProvider } from './ai/provider.js';
 import { triageTicket } from './ai/triage.js';
 import { draftReply } from './ai/reply.js';
@@ -36,7 +37,8 @@ async function ensureSeeded() {
     && query('SELECT COUNT(*) AS n FROM tickets')[0].n > 0;
   if (seeded) return;
   console.log('[boot] database is empty — seeding');
-  await import('./seed.js');
+  const counts = await seedDatabase();
+  console.log(`[boot] seeded ${counts.customers} customers, ${counts.invoices} invoices, ${counts.tickets} tickets`);
 }
 await ensureSeeded();
  
@@ -62,8 +64,10 @@ function budget(cost) {
     const recent = (spend.get(key) ?? []).filter((t) => now - t < HOUR_MS);
     if (recent.length + cost > ceiling) {
       console.warn(`[api] budget reached for ${key}: ${recent.length}/${ceiling}`);
+      // Tell them when they can retry: an error without a next step is just a dead end.
+      const waitMin = Math.max(1, Math.ceil((HOUR_MS - (now - recent[0])) / 60000));
       return res.status(429).json({
-        error: `This public demo allows ${ceiling} AI calls per hour. Try again shortly, or run it locally — the repository is linked below the demo.`,
+        error: `This public demo allows ${ceiling} AI calls per hour and you have used ${recent.length}. Try again in about ${waitMin} minute${waitMin === 1 ? '' : 's'}, or clone the repository (linked in the sidebar) and run it with your own key.`,
       });
     }
     spend.set(key, [...recent, ...Array(cost).fill(now)]);
@@ -193,6 +197,22 @@ app.get('/api/eval-report', route(async (_req, res) => {
   const file = path.join(ROOT, 'eval', 'report.json');
   if (!fs.existsSync(file)) return res.status(404).json({ error: 'no evaluation has been run yet' });
   res.json(JSON.parse(fs.readFileSync(file, 'utf8')));
+}));
+ 
+/**
+ * Puts the demo back to a first-visit state: 40 untriaged tickets.
+ *
+ * The AI's decisions are stored server-side, which is right for a product and awkward for a
+ * demo — after one walkthrough every ticket is already triaged, and the next person to open
+ * the link sees the ending rather than the beginning. This is the reset, so the demo can be
+ * shown twice.
+ *
+ * Costs no model calls, so it sits outside the AI budget.
+ */
+app.post('/api/demo/reset', route(async (_req, res) => {
+  const counts = await seedDatabase();
+  console.log(`[demo] reset to ${counts.tickets} untriaged tickets`);
+  res.json({ ok: true, ...counts });
 }));
  
 app.use(express.static(path.join(ROOT, 'dist')));

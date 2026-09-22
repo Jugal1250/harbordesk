@@ -8,10 +8,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getDb, persist, run, SCHEMA_SQL } from './db.js';
-
+ 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const TODAY = '2026-09-22';
-
+ 
 const CUSTOMERS = [
   ['Northwind Retail', 'Maya Chen', 'maya@northwind.example', 'Canada', '2024-03-11', 'growth', 18, 540, 'active'],
   ['Brightleaf Studio', 'Daniel Okafor', 'dan@brightleaf.example', 'United Kingdom', '2024-06-02', 'starter', 4, 96, 'active'],
@@ -38,14 +38,14 @@ const CUSTOMERS = [
   ['Willow Tutoring', 'Aisha Bello', 'aisha@willowtutor.example', 'Nigeria', '2025-09-01', 'starter', 2, 48, 'active'],
   ['Granite Build', 'Erik Johansson', 'erik@granitebuild.example', 'Sweden', '2024-10-14', 'growth', 14, 420, 'active'],
 ];
-
+ 
 /** @param {string} date @param {number} days @returns {string} */
 function addDays(date, days) {
   const d = new Date(`${date}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
-
+ 
 /**
  * Builds a year of invoices per customer, with a realistic mix of paid, open and overdue.
  * @param {number} customerId
@@ -69,34 +69,54 @@ function invoicesFor(customerId, mrr, status, nextId) {
   }
   return { rows, nextId: id };
 }
-
+ 
 const TICKETS = JSON.parse(fs.readFileSync(path.join(ROOT, 'eval', 'tickets.json'), 'utf8'));
-
-const db = await getDb();
-db.run('DROP TABLE IF EXISTS tickets; DROP TABLE IF EXISTS invoices; DROP TABLE IF EXISTS subscriptions; DROP TABLE IF EXISTS customers;');
-db.run(SCHEMA_SQL);
-
-CUSTOMERS.forEach((c, i) => {
-  const [company, contact, email, country, signedUp, plan, seats, mrr, status] = c;
-  const id = i + 1;
-  run('INSERT INTO customers VALUES (?,?,?,?,?,?)', [id, company, contact, email, country, signedUp]);
-  run('INSERT INTO subscriptions VALUES (?,?,?,?,?,?,?,?)', [
-    id, id, plan, seats, mrr, status, signedUp,
-    status === 'cancelled' ? addDays(TODAY, -(20 + id)) : null,
-  ]);
-});
-
-let invoiceId = 1;
-CUSTOMERS.forEach((c, i) => {
-  const { rows, nextId } = invoicesFor(i + 1, c[7], c[8], invoiceId);
-  rows.forEach((r) => run('INSERT INTO invoices VALUES (?,?,?,?,?,?)', r));
-  invoiceId = nextId;
-});
-
-TICKETS.forEach((t) => {
-  run('INSERT INTO tickets (id, customer_id, subject, body, channel, created_at, status) VALUES (?,?,?,?,?,?,?)',
-    [t.id, t.customer_id, t.subject, t.body, t.channel, t.created_at, t.status]);
-});
-
-persist();
-console.log(`[seed] ${CUSTOMERS.length} customers, ${invoiceId - 1} invoices, ${TICKETS.length} tickets written to data/harbordesk.sqlite`);
+ 
+/**
+ * Builds the demo database from scratch: drops what is there, recreates the schema, inserts
+ * customers, subscriptions, invoices and the 40 tickets.
+ *
+ * Exported rather than run at import time so the API can call it too. The demo is shown to
+ * clients repeatedly, and after one run-through every ticket is already triaged — the reset
+ * endpoint calls this to put it back to a first-visit state. An ES module only evaluates once
+ * per process, so a script with its work at the top level cannot be re-run; a function can.
+ *
+ * @returns {Promise<{customers: number, invoices: number, tickets: number}>}
+ */
+export async function seedDatabase() {
+  const db = await getDb();
+  db.run('DROP TABLE IF EXISTS tickets; DROP TABLE IF EXISTS invoices; DROP TABLE IF EXISTS subscriptions; DROP TABLE IF EXISTS customers;');
+  db.run(SCHEMA_SQL);
+ 
+  CUSTOMERS.forEach((c, i) => {
+    const [company, contact, email, country, signedUp, plan, seats, mrr, status] = c;
+    const id = i + 1;
+    run('INSERT INTO customers VALUES (?,?,?,?,?,?)', [id, company, contact, email, country, signedUp]);
+    run('INSERT INTO subscriptions VALUES (?,?,?,?,?,?,?,?)', [
+      id, id, plan, seats, mrr, status, signedUp,
+      status === 'cancelled' ? addDays(TODAY, -(20 + id)) : null,
+    ]);
+  });
+ 
+  let invoiceId = 1;
+  CUSTOMERS.forEach((c, i) => {
+    const { rows, nextId } = invoicesFor(i + 1, c[7], c[8], invoiceId);
+    rows.forEach((r) => run('INSERT INTO invoices VALUES (?,?,?,?,?,?)', r));
+    invoiceId = nextId;
+  });
+ 
+  TICKETS.forEach((t) => {
+    run('INSERT INTO tickets (id, customer_id, subject, body, channel, created_at, status) VALUES (?,?,?,?,?,?,?)',
+      [t.id, t.customer_id, t.subject, t.body, t.channel, t.created_at, t.status]);
+  });
+ 
+  persist();
+  return { customers: CUSTOMERS.length, invoices: invoiceId - 1, tickets: TICKETS.length };
+}
+ 
+// Run it when this file is executed directly (`npm run seed`), not when the API imports it.
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const counts = await seedDatabase();
+  console.log(`[seed] ${counts.customers} customers, ${counts.invoices} invoices, ${counts.tickets} tickets written to data/harbordesk.sqlite`);
+}
+ 

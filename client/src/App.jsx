@@ -18,6 +18,7 @@ export default function App() {
   const [tickets, setTickets] = useState([]);
   const [stats, setStats] = useState(null);
   const [health, setHealth] = useState(null);
+  const [resetting, setResetting] = useState(false);
 
   const refresh = useCallback(async () => {
     const [t, s] = await Promise.all([api.tickets(), api.stats()]);
@@ -34,6 +35,26 @@ export default function App() {
   const humanQueue = tickets.filter((t) => t.routed_to === 'human-review').length;
 
   const go = (id) => { setPage(id); setOpenTicket(null); };
+
+  /**
+   * Puts the demo back to 40 untriaged tickets. Confirmed first, because the triage results
+   * are shared — whoever else has the link open is looking at the same data.
+   */
+  const reset = async () => {
+    if (!window.confirm('Reset the demo? Every ticket goes back to untriaged, for everyone with this link open.')) return;
+    setResetting(true);
+    try {
+      await api.resetDemo();
+      setOpenTicket(null);
+      setPage('inbox');
+      await refresh();
+    } catch (e) {
+      console.error('[app] reset failed:', e.message);
+      window.alert(`Could not reset: ${e.message}`);
+    } finally {
+      setResetting(false);
+    }
+  };
 
   return (
     <div className="shell">
@@ -61,6 +82,12 @@ export default function App() {
               <span>{health.knowledge_base.count} help articles indexed</span>
             </>
           ) : <span>API not reachable</span>}
+          <button type="button" className="btn ghost small" onClick={reset} disabled={resetting} style={{ marginTop: 10 }}>
+            {resetting ? 'Resetting…' : 'Reset demo'}
+          </button>
+          <a className="sub" href="https://github.com/Jugal1250/harbordesk" target="_blank" rel="noreferrer" style={{ marginTop: 8 }}>
+            Source on GitHub →
+          </a>
         </div>
       </aside>
 

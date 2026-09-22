@@ -2,7 +2,7 @@
  * Thin wrapper over the API. Every call surfaces server errors as thrown Errors so pages
  * can show what went wrong instead of rendering an empty state and hiding the problem.
  */
-
+ 
 /**
  * @param {string} path
  * @param {RequestInit} [options]
@@ -17,7 +17,7 @@ async function request(path, options = {}) {
   if (!res.ok) throw new Error(body.error || `${res.status} ${res.statusText}`);
   return body;
 }
-
+ 
 export const api = {
   health: () => request('/health'),
   tickets: () => request('/tickets'),
@@ -27,4 +27,6 @@ export const api = {
   triageAll: () => request('/triage/run-all', { method: 'POST' }),
   draftReply: (id) => request(`/tickets/${id}/draft-reply`, { method: 'POST' }),
   askData: (question) => request('/ask-data', { method: 'POST', body: JSON.stringify({ question }) }),
+  resetDemo: () => request('/demo/reset', { method: 'POST' }),
 };
+ 
