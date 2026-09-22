@@ -1,0 +1,25 @@
+# One free web service: Express serves the API and the built React client from the same origin.
+# Render wipes the disk on every deploy, which is fine — the app seeds itself on boot.
+services:
+  - type: web
+    name: harbordesk
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: AI_PROVIDER
+        value: groq
+      - key: GROQ_API_KEY
+        sync: false          # set this in the Render dashboard, never in the repo
+      - key: TRIAGE_MODEL
+        value: openai/gpt-oss-20b
+      - key: REPLY_MODEL
+        value: openai/gpt-oss-120b
+      - key: SQL_MODEL
+        value: openai/gpt-oss-120b
+      - key: CONFIDENCE_THRESHOLD
+        value: "0.7"
+      - key: DEMO_RATE_LIMIT
+        value: "60"          # AI calls per visitor per hour; 0 disables the limit
