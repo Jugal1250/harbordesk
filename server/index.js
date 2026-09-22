@@ -16,13 +16,61 @@ import { triageTicket } from './ai/triage.js';
 import { draftReply } from './ai/reply.js';
 import { askData } from './ai/sqlgen.js';
 import { kbStats } from './ai/retrieve.js';
-
+ 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const app = express();
 app.use(express.json({ limit: '1mb' }));
-
+ 
 await getDb();
-
+ 
+/**
+ * Seeds the database on first boot if it is empty.
+ *
+ * Hosted free tiers give you a disk that is wiped on every deploy and often on every restart,
+ * so "run the seed once by hand" is not a deployment step that survives. This makes an empty
+ * database self-healing instead: the app comes up with its demo data whatever the host did to
+ * the disk, and does nothing when data is already there.
+ */
+async function ensureSeeded() {
+  const seeded = query("SELECT name FROM sqlite_master WHERE type='table' AND name='tickets'").length
+    && query('SELECT COUNT(*) AS n FROM tickets')[0].n > 0;
+  if (seeded) return;
+  console.log('[boot] database is empty — seeding');
+  await import('./seed.js');
+}
+await ensureSeeded();
+ 
+/**
+ * A crude per-IP budget on the routes that spend money.
+ *
+ * The demo is public, the API key is not. Without this, one person with a loop empties the
+ * day's quota and everyone who opens the link afterwards sees errors. A real product bills the
+ * customer and rate-limits per account; a demo just needs a ceiling, so this is deliberately
+ * the simplest thing that works: an in-memory sliding hour, no dependency, no store.
+ *
+ * @param {number} cost model calls this route makes, so a 40-ticket batch is not charged as one
+ * @returns {import('express').RequestHandler}
+ */
+const HOUR_MS = 60 * 60 * 1000;
+const spend = new Map();
+function budget(cost) {
+  const ceiling = Number(process.env.DEMO_RATE_LIMIT || 60);
+  return (req, res, next) => {
+    if (!ceiling) return next();
+    const now = Date.now();
+    const key = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.ip;
+    const recent = (spend.get(key) ?? []).filter((t) => now - t < HOUR_MS);
+    if (recent.length + cost > ceiling) {
+      console.warn(`[api] budget reached for ${key}: ${recent.length}/${ceiling}`);
+      return res.status(429).json({
+        error: `This public demo allows ${ceiling} AI calls per hour. Try again shortly, or run it locally — the repository is linked below the demo.`,
+      });
+    }
+    spend.set(key, [...recent, ...Array(cost).fill(now)]);
+    return next();
+  };
+}
+ 
 /** Wraps an async route so a thrown error becomes a JSON 500 instead of a hung request. */
 const route = (handler) => (req, res) => {
   handler(req, res).catch((error) => {
@@ -30,7 +78,7 @@ const route = (handler) => (req, res) => {
     res.status(500).json({ error: error.message });
   });
 };
-
+ 
 /** Posts an event to n8n when a webhook is configured. Failures never block the API. */
 async function notifyN8n(event, payload) {
   const url = process.env.N8N_WEBHOOK_URL;
@@ -46,7 +94,7 @@ async function notifyN8n(event, payload) {
     console.warn(`[n8n] could not send ${event}: ${error.message}`);
   }
 }
-
+ 
 app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
@@ -60,7 +108,7 @@ app.get('/api/health', (_req, res) => {
     knowledge_base: kbStats(),
   });
 });
-
+ 
 // --- the SaaS as it existed before the AI work -------------------------------
 app.get('/api/tickets', route(async (_req, res) => {
   res.json(query(`
@@ -68,7 +116,7 @@ app.get('/api/tickets', route(async (_req, res) => {
     FROM tickets t JOIN customers c ON c.id = t.customer_id
     ORDER BY t.created_at DESC`));
 }));
-
+ 
 app.get('/api/tickets/:id', route(async (req, res) => {
   const rows = query(`
     SELECT t.*, c.company, c.contact_name, c.email, c.country,
@@ -80,7 +128,7 @@ app.get('/api/tickets/:id', route(async (req, res) => {
   if (!rows.length) return res.status(404).json({ error: 'ticket not found' });
   res.json(rows[0]);
 }));
-
+ 
 app.get('/api/stats', route(async (_req, res) => {
   res.json({
     tickets: query('SELECT COUNT(*) AS total, SUM(triaged_at IS NOT NULL) AS triaged, SUM(routed_to = \'human-review\') AS human_review FROM tickets')[0],
@@ -89,25 +137,25 @@ app.get('/api/stats', route(async (_req, res) => {
     mrr: query('SELECT SUM(mrr) AS active_mrr FROM subscriptions WHERE status = \'active\'')[0],
   });
 }));
-
+ 
 // --- AI feature 1: triage ----------------------------------------------------
-app.post('/api/tickets/:id/triage', route(async (req, res) => {
+app.post('/api/tickets/:id/triage', budget(1), route(async (req, res) => {
   const id = Number(req.params.id);
   const rows = query('SELECT * FROM tickets WHERE id = ?', [id]);
   if (!rows.length) return res.status(404).json({ error: 'ticket not found' });
-
+ 
   const result = await triageTicket(rows[0]);
   run(`UPDATE tickets SET category = ?, priority = ?, sentiment = ?, confidence = ?, routed_to = ?, routing_reason = ?, triaged_at = ? WHERE id = ?`,
     [result.category, result.priority, result.sentiment, result.confidence, result.routed_to, result.routing_reason, new Date().toISOString(), id]);
   persist();
-
+ 
   if (result.priority === 'urgent' || result.category === 'security') {
     await notifyN8n('ticket.urgent', { ticket: { id, subject: rows[0].subject, ...result } });
   }
   res.json({ id, ...result });
 }));
-
-app.post('/api/triage/run-all', route(async (_req, res) => {
+ 
+app.post('/api/triage/run-all', budget(40), route(async (_req, res) => {
   const pending = query('SELECT * FROM tickets WHERE triaged_at IS NULL ORDER BY id');
   const results = [];
   for (const ticket of pending) {
@@ -120,23 +168,23 @@ app.post('/api/triage/run-all', route(async (_req, res) => {
   console.log(`[triage] processed ${results.length} tickets, ${results.filter((r) => r.needs_human).length} sent to human review`);
   res.json({ processed: results.length, human_review: results.filter((r) => r.needs_human).length, results });
 }));
-
+ 
 // --- AI feature 2: grounded reply drafts -------------------------------------
-app.post('/api/tickets/:id/draft-reply', route(async (req, res) => {
+app.post('/api/tickets/:id/draft-reply', budget(1), route(async (req, res) => {
   const rows = query(`
     SELECT t.*, c.contact_name FROM tickets t JOIN customers c ON c.id = t.customer_id WHERE t.id = ?`,
     [Number(req.params.id)]);
   if (!rows.length) return res.status(404).json({ error: 'ticket not found' });
   res.json(await draftReply(rows[0]));
 }));
-
+ 
 // --- AI feature 3: ask your data ---------------------------------------------
-app.post('/api/ask-data', route(async (req, res) => {
+app.post('/api/ask-data', budget(1), route(async (req, res) => {
   const question = String(req.body?.question ?? '').trim();
   if (!question) return res.status(400).json({ error: 'question is required' });
   res.json(await askData(question));
 }));
-
+ 
 /**
  * The most recent `npm run eval` result, so the console can show how well the AI scored
  * rather than only what it produced. Returns 404 until an evaluation has been run.
@@ -146,10 +194,11 @@ app.get('/api/eval-report', route(async (_req, res) => {
   if (!fs.existsSync(file)) return res.status(404).json({ error: 'no evaluation has been run yet' });
   res.json(JSON.parse(fs.readFileSync(file, 'utf8')));
 }));
-
+ 
 app.use(express.static(path.join(ROOT, 'dist')));
-
+ 
 const port = Number(process.env.PORT || 8787);
 app.listen(port, () => {
   console.log(`[api] http://localhost:${port} — provider: ${activeProvider()}`);
 });
+ 
